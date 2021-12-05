@@ -1,5 +1,6 @@
 const { App, WorkflowStep } = require("@slack/bolt");
 require("dotenv").config();
+const fs = require("fs");
 var sqlite3 = require("sqlite3").verbose();
 var db = new sqlite3.Database("database.sqlite");
 
@@ -38,6 +39,22 @@ const app = new App({
 
     console.log("⚡️ Bolt app is running!");
 })();
+
+//Send the database file for download
+app.command("/download_database", async ({ command, ack, say }) => {
+	// Acknowledge command request
+	ack();
+
+	// Send the database file
+	await app.client.files.upload({
+		channels: command.channel_id,
+		filename: `database.sqlite`,
+		file: fs.createReadStream("./database.sqlite"),
+		filetype: "sqlite",
+		initial_comment: "Downloaded database",
+		title: "database.sqlite",
+	});
+});
 
 //Place an order with the given name and the price with the commend /ordina <name> <price>
 app.command("/ordina", async ({ command, ack, say }) => {
