@@ -46,7 +46,8 @@ app.command("/ordina", async ({ command, ack, say }) => {
 
     // Get the order name and price
     const { text, user_id, user_name } = command;
-    let [orderName, price] = text.split(" ");
+	let price = text.split(" ")[text.split(" ").length - 1];
+    let orderName = text.split(" ").slice(0, text.split(" ").length - 1).join(" ");
 
     // Check if the order name is valid
     if (!orderName) {
@@ -231,7 +232,7 @@ app.command("/saldo_cassetta", async ({ command, ack, say }) => {
 	ack();
 
 	const totalBalance = await getTotalBalance();
-	say(`Saldo cassetta: ${totalBalance ?? '<= 0'}€`);
+	say(`Saldo cassetta: ${totalBalance ?? 0}€`);
 });
 
 function getTotalBalance() {
