@@ -1,0 +1,71 @@
+_metadata:
+  major_version: 1
+  minor_version: 1
+display_information:
+  name: SF-Pranzo
+  description: Un bot per ordinare il Pranzo
+  background_color: "#c45f00"
+features:
+  bot_user:
+    display_name: Pranzo
+    always_online: true
+  slash_commands:
+    - command: /ricarica
+      description: Ricarica il tuo conto 💸
+      usage_hint: "[euro] {userId}"
+      should_escape: false
+    - command: /conto
+      description: Mostrami il saldo ed i movimenti del mio conto
+      usage_hint: "{userId}"
+      should_escape: false
+    - command: /ordina
+      description: Ordina un piatto [UNO ALLA VOLTA]
+      usage_hint: "[name] [price]"
+      should_escape: false
+    - command: /ordini
+      description: Mostra tutti i tuoi ordini
+      usage_hint: "{userId}"
+      should_escape: false
+    - command: /ordini_tutti
+      description: "Mostra tutti gli ordini "
+      should_escape: false
+    - command: /saldo_cassetta
+      description: Mastra il saldo totale all'interno della cassetta
+      should_escape: false
+    - command: /download_database
+      description: "Scarica il database per farne un backup  "
+      should_escape: false
+  workflow_steps:
+    - name: Print all the orders
+      callback_id: all_orders
+    - name: Reset all the orders
+      callback_id: reset_orders
+oauth_config:
+  scopes:
+    bot:
+      - channels:history
+      - channels:read
+      - chat:write
+      - commands
+      - groups:history
+      - groups:read
+      - groups:write
+      - im:history
+      - im:read
+      - mpim:history
+      - reactions:read
+      - workflow.steps:execute
+      - files:write
+settings:
+  event_subscriptions:
+    bot_events:
+      - message.channels
+      - message.groups
+      - message.im
+      - message.mpim
+      - workflow_step_execute
+  interactivity:
+    is_enabled: true
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
