@@ -63,7 +63,7 @@ app.command("/ordina", async ({ command, ack, say }) => {
 
     // Get the order name and price
     const { text, user_id, user_name } = command;
-	let price = text.split(" ")[text.split(" ").length - 1];
+	let price = text.split(" ")[text.split(" ").length - 1].replace(",", ".");
     let orderName = text.split(" ").slice(0, text.split(" ").length - 1).join(" ");
 
     // Check if the order name is valid
@@ -96,13 +96,13 @@ app.command("/ordina", async ({ command, ack, say }) => {
         say(
             `${user_name} IL TUO SALDO È ${
                 balance - price
-            }€, RICORDI DI PAGARE APPENA POSSIBLE`
+            }€, *RICORDI DI PAGARE APPENA POSSIBLE*`
         );
     }
 
     // Create the order
     await placeOrder(user_id, orderName, price);
-    say(`${user_name} ha ordinato ${orderName} a ${price}€`);
+    say(`*${user_name}* ha ordinato *${orderName}* a *${parseFloat(price).toFixed(2)}€*`);
 });
 
 function placeOrder(user_id, orderName, price) {
@@ -182,9 +182,9 @@ app.command("/ordini", async ({ command, ack, say }) => {
         return;
     }
 
-    let message = `${user_name} ha ordinato:\n`;
+    let message = `*${user_name} ha ordinato:*\n`;
     orders.forEach((order) => {
-        message += `${order.orderName} a ${order.price}€\n`;
+        message += `${order.orderName} a ${parseFloat(order.price).toFixed(2)}€\n`;
     });
     say(message);
 });
@@ -218,7 +218,7 @@ app.command("/ordini_tutti", async ({ command, ack, say }) => {
         return;
     }
 
-    let message = `Ordini(${orders.length}):\n`;
+    let message = `*Ordini(${orders.length}):*\n`;
     let total = 0;
     //sort the orders by orderName
     orders = orders.sort((a, b) => {
@@ -233,13 +233,13 @@ app.command("/ordini_tutti", async ({ command, ack, say }) => {
         ) {
             orders[i + 1].quantity = (orders[i].quantity ?? 1) + 1;
         } else {
-            message += `x${orders[i]?.quantity ?? 1} | ${
+            message += `*x${orders[i]?.quantity ?? 1}* | ${
                 orders[i].orderName
-            } - ${orders[i].price}€\n`;
+            } - *${parseFloat(orders[i].price).toFixed(2)}€*\n`;
         }
         total += orders[i].price;
     }
-    message += `\nTotale: ${total}€`;
+    message += `\nTotale: *${total}€*`;
     say(message);
 });
 
@@ -249,7 +249,7 @@ app.command("/saldo_cassetta", async ({ command, ack, say }) => {
 	ack();
 
 	const totalBalance = await getTotalBalance();
-	say(`Saldo cassetta: ${totalBalance ?? 0}€`);
+	say(`Saldo cassetta: *${totalBalance ?? 0}€*`);
 });
 
 function getTotalBalance() {
@@ -342,10 +342,10 @@ const ws_all_orders = new WorkflowStep("all_orders", {
             return;
         }
 
-        let message = `Ordini(${orders.length}):\n`;
+        let message = `*Ordini(${orders.length}):*\n`;
         let total = 0;
         //sort the orders by orderName
-        orders = orders.sort((a, b) => {
+		orders = orders.sort((a, b) => {
             return a.orderName.localeCompare(b.orderName);
         });
         for (let i = 0; i < orders.length; i++) {
@@ -357,13 +357,13 @@ const ws_all_orders = new WorkflowStep("all_orders", {
             ) {
                 orders[i + 1].quantity = (orders[i].quantity ?? 1) + 1;
             } else {
-                message += `x${orders[i]?.quantity ?? 1} | ${
+                message += `*x${orders[i]?.quantity ?? 1}* | *${
                     orders[i].orderName
-                } - ${orders[i].price}€\n`;
+                }* - *${orders[i].price}€*\n`;
             }
             total += orders[i].price;
         }
-        message += `\nTotale: ${total}€`;
+        message += `\nTotale: *${total}€*`;
 
 		//send the message to the channel
 		app.client.chat.postMessage({

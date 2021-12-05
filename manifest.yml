@@ -35,6 +35,9 @@ features:
     - command: /download_database
       description: "Scarica il database per farne un backup  "
       should_escape: false
+    - command: /conto_tutti
+      description: Mostra il conto il saldo di tutti
+      should_escape: false
   workflow_steps:
     - name: Print all the orders
       callback_id: all_orders

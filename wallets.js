@@ -11,7 +11,7 @@ module.exports = (app, db) => {
         const username = command.user_name;
 
         // Get the amount of money to add and convert it to a number
-        const amount = parseFloat(text.split(" ")[0]);
+        const amount = parseFloat(text.split(" ")[0].replace(",", "."));
         if (typeof amount !== "number" || isNaN(amount)) {
             await say("Inserisci un importo");
             return;
@@ -29,8 +29,48 @@ module.exports = (app, db) => {
         await addMoney(walletID, amount);
 
         // Say something to the channel
-        say(`Il conto di ${username} è stato ricaricato con ${amount}€`);
+        say(`Il conto di *${username}* è stato ricaricato con *${parseFloat(amount).toFixed(2)}€*`);
     });
+
+    //Show the balance of all the wallets with the command /conto_tutti
+    app.command("/conto_tutti", async ({ command, ack, say }) => {
+        // Acknowledge command request
+        ack();
+
+        //Get all the wallets
+        let wallets = await getAllWallets();
+
+        //Foreach wallet
+        message = `*Conti(${wallets.length}):*\n`;
+        //sort the wallets by balance
+        console.log(wallets);
+        try {
+          wallets = wallets.sort((a, b) => { return b.balance - a.balance });
+        } catch (error) {
+        }
+        for (let i = 0; i < wallets.length; i++) {
+            //Get the wallet
+            const wallet = wallets[i];
+
+            message += `*${wallet.balance}€* - *${wallet.username}*`;
+        }
+
+        say(message);
+    });
+
+    function getAllWallets() {
+        return new Promise((resolve, reject) => {
+            db.get("SELECT * FROM wallets", (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+
 
     function addMoney(walletID, amount, username) {
         return new Promise((resolve, reject) => {
@@ -95,7 +135,7 @@ module.exports = (app, db) => {
 
         // Show the wallet balance
         const balance = await getBalance(walletID, username, say);
-        say(`Il conto di ${username} è di ${balance}€`);
+        say(`Il conto di *${username}* è di *${balance}€*`);
 
         // Show the wallet movement
         await showMovement(walletID, username, say);
@@ -126,9 +166,9 @@ module.exports = (app, db) => {
                     if (err) {
                         reject(err);
                     }
-                    let message = `I movimenti di ${username} sono:\n`;
+                    let message = `*I movimenti di ${username} sono:*\n`;
                     rows.forEach((row) => {
-                        message += `${row.date} | ${row.amount}€ | ${row.description}\n`;
+                        message += `*${row.date}* | *${parseFloat(row.amount).toFixed(2)}€* | ${row.description}\n`;
                     });
                     say(message);
                     resolve();
