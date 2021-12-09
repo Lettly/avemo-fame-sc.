@@ -41,21 +41,23 @@ module.exports = (app, db) => {
         let wallets = await getAllWallets();
 
         //Foreach wallet
-        message = `*Conti(${wallets.length}):*\n`;
+        message = `*Conti(${wallets?.length ??0}):*\n`;
         //sort the wallets by balance
         console.log(wallets);
         try {
           wallets = wallets.sort((a, b) => { return b.balance - a.balance });
+        
+            for (let i = 0; i < wallets.length; i++) {
+                //Get the wallet
+                const wallet = wallets[i];
+
+                message += `*${wallet.balance}€* - *${wallet.name}*(${wallet.id})\n`;
+            }
+
+            say(message);
         } catch (error) {
+            say("Errore (Probabilmente non ci sono conti aperti)");
         }
-        for (let i = 0; i < wallets.length; i++) {
-            //Get the wallet
-            const wallet = wallets[i];
-
-            message += `*${wallet.balance}€* - *${wallet.username}*`;
-        }
-
-        say(message);
     });
 
     function getAllWallets() {

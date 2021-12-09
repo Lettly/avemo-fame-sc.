@@ -42,18 +42,18 @@ const app = new App({
 
 //Send the database file for download
 app.command("/download_database", async ({ command, ack, say }) => {
-	// Acknowledge command request
-	ack();
+    // Acknowledge command request
+    ack();
 
-	// Send the database file
-	await app.client.files.upload({
-		channels: command.channel_id,
-		filename: `database.sqlite`,
-		file: fs.createReadStream("./database.sqlite"),
-		filetype: "sqlite",
-		initial_comment: "Downloaded database",
-		title: "database.sqlite",
-	});
+    // Send the database file
+    await app.client.files.upload({
+        channels: command.channel_id,
+        filename: `database.sqlite`,
+        file: fs.createReadStream("./database.sqlite"),
+        filetype: "sqlite",
+        initial_comment: "Downloaded database",
+        title: "database.sqlite",
+    });
 });
 
 //Place an order with the given name and the price with the commend /ordina <name> <price>
@@ -63,25 +63,28 @@ app.command("/ordina", async ({ command, ack, say }) => {
 
     // Get the order name and price
     const { text, user_id, user_name } = command;
-	let price = text.split(" ")[text.split(" ").length - 1].replace(",", ".");
-    let orderName = text.split(" ").slice(0, text.split(" ").length - 1).join(" ");
+    let price = text.split(" ")[text.split(" ").length - 1].replace(",", ".");
+    let orderName = text
+        .split(" ")
+        .slice(0, text.split(" ").length - 1)
+        .join(" ");
 
     // Check if the order name is valid
     if (!orderName) {
-        say("Please enter a valid order name");
+        say("Please enter a valid order name or price");
         return;
     }
     orderName = orderName.toLowerCase();
 
     // Check if the price is valid
     if (!price) {
-        say("Please enter a valid price");
+        say("Please enter a valid order name or price");
         return;
     }
 
     // Check if the price is a number
     if (isNaN(price)) {
-        say("Please enter a valid price");
+        say("Please enter a valid order name or price");
         return;
     }
 
@@ -101,11 +104,15 @@ app.command("/ordina", async ({ command, ack, say }) => {
     }
 
     // Create the order
-    await placeOrder(user_id, orderName, price);
-    say(`*${user_name}* ha ordinato *${orderName}* a *${parseFloat(price).toFixed(2)}€*`);
+    await placeOrder(user_id, orderName, price, balance, user_name);
+    say(
+        `*${user_name}* ha ordinato *${orderName}* a *${parseFloat(
+            price
+        ).toFixed(2)}€*`
+    );
 });
 
-function placeOrder(user_id, orderName, price) {
+function placeOrder(user_id, orderName, price, balance, username) {
     return new Promise((resolve, reject) => {
         db.run(
             `INSERT INTO orders (wallet_id, orderName, price) VALUES (?, ?, ?)`,
@@ -114,10 +121,11 @@ function placeOrder(user_id, orderName, price) {
                 if (err) {
                     reject(err);
                 }
+                const newBalance = balance - price;
                 //update the balance of the user
                 db.run(
-                    `UPDATE wallets SET balance = balance - ? WHERE id = ?`,
-                    [price, user_id],
+                    `INSERT or REPLACE INTO wallets (id, balance, name) VALUES (?, ?, ?)`,
+                    [user_id, newBalance, username],
                     function (err) {
                         if (err) {
                             reject(err);
@@ -184,7 +192,9 @@ app.command("/ordini", async ({ command, ack, say }) => {
 
     let message = `*${user_name} ha ordinato:*\n`;
     orders.forEach((order) => {
-        message += `${order.orderName} a ${parseFloat(order.price).toFixed(2)}€\n`;
+        message += `${order.orderName} a ${parseFloat(order.price).toFixed(
+            2
+        )}€\n`;
     });
     say(message);
 });
@@ -245,25 +255,25 @@ app.command("/ordini_tutti", async ({ command, ack, say }) => {
 
 //Get how match money are inside the sherd wallet
 app.command("/saldo_cassetta", async ({ command, ack, say }) => {
-	// Acknowledge command request
-	ack();
+    // Acknowledge command request
+    ack();
 
-	const totalBalance = await getTotalBalance();
-	say(`Saldo cassetta: *${totalBalance ?? 0}€*`);
+    const totalBalance = await getTotalBalance();
+    say(`Saldo cassetta: *${totalBalance ?? 0}€*`);
 });
 
 function getTotalBalance() {
-	return new Promise((resolve, reject) => {
-		db.all(
-			`SELECT SUM(balance) AS totalBalance FROM wallets WHERE balance > 0`,
-			(err, rows) => {
-				if (err) {
-					reject(err);
-				}
-				resolve(rows[0].totalBalance);
-			}
-		);
-	});
+    return new Promise((resolve, reject) => {
+        db.all(
+            `SELECT SUM(balance) AS totalBalance FROM wallets WHERE balance > 0`,
+            (err, rows) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(rows[0].totalBalance);
+            }
+        );
+    });
 }
 
 function getOrdersAll() {
@@ -326,7 +336,7 @@ const ws_all_orders = new WorkflowStep("all_orders", {
     execute: async ({ step, complete, fail }) => {
         const { inputs } = step;
 
-		const outputs = {
+        const outputs = {
             channelId: inputs.channelId.value.split("#")[1].split("|")[0],
         };
 
@@ -336,16 +346,16 @@ const ws_all_orders = new WorkflowStep("all_orders", {
         // Check if there are any orders
         if (orders.length === 0) {
             app.client.chat.postMessage({
-				channel: outputs.channelId,
-				text: "Non ci sono ordini",
-			});
+                channel: outputs.channelId,
+                text: "Non ci sono ordini",
+            });
             return;
         }
 
         let message = `*Ordini(${orders.length}):*\n`;
         let total = 0;
         //sort the orders by orderName
-		orders = orders.sort((a, b) => {
+        orders = orders.sort((a, b) => {
             return a.orderName.localeCompare(b.orderName);
         });
         for (let i = 0; i < orders.length; i++) {
@@ -365,11 +375,11 @@ const ws_all_orders = new WorkflowStep("all_orders", {
         }
         message += `\nTotale: *${total}€*`;
 
-		//send the message to the channel
-		app.client.chat.postMessage({
-			channel: outputs.channelId,
-			text: message,
-		});
+        //send the message to the channel
+        app.client.chat.postMessage({
+            channel: outputs.channelId,
+            text: message,
+        });
 
         // signal back to Slack that everything was successful
         await complete({ outputs });
